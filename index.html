@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crash Course: From Perceptron to Transformer</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom styles for the application */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* A light, neutral background */
+            color: #1e293b;
+        }
+
+        /* Progress bar animation */
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Tooltip and Modal styles */
+        .tooltip-hotspot {
+            border-bottom: 2px dotted #3b82f6;
+            cursor: pointer;
+            font-weight: 600;
+            color: #2563eb;
+        }
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+
+        /* Flip card styles for the quiz */
+        .flip-card { perspective: 1000px; }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .flip-card-front { background-color: white; }
+        .flip-card-back {
+            background-color: #1e40af; /* Deep blue for the answer */
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* Attention visualization animation */
+        .attention-arrow, .attention-value {
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header with Progress Bar -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-lg shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-lg md:text-xl font-bold text-slate-800">Perceptron → Transformer</h1>
+                <div class="w-1/3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 50%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs font-medium text-gray-500 mt-1">
+                        <a href="#perceptron" class="cursor-pointer hover:text-blue-600">Stage 1</a>
+                        <a href="#transformer" class="cursor-pointer hover:text-blue-600">Stage 2</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- SECTION 1: PERCEPTRON -->
+        <section id="perceptron" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Stage 1: The Perceptron - The Basic Neuron</h2>
+            <p class="text-lg text-slate-600 mb-8">The journey begins with the simplest building block of a neural network. A perceptron takes multiple inputs, multiplies them by weights, adds a bias, and uses an <span class="tooltip-hotspot" data-term="activation">activation function</span> to produce an output.</p>
+            
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                    
+                    <!-- Inputs and Weights Controls -->
+                    <div class="md:col-span-1 space-y-6">
+                        <h3 class="text-xl font-bold text-center">Inputs & Weights</h3>
+                        <!-- Input 1 -->
+                        <div>
+                            <label for="weight1" class="font-semibold">Weight 1 (Input is fixed at 0.5)</label>
+                            <input id="weight1" type="range" min="-2" max="2" value="1" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="text-center font-mono text-blue-700">w1 = <span id="weight1-val">1.0</span></div>
+                        </div>
+                        <!-- Input 2 -->
+                        <div>
+                            <label for="weight2" class="font-semibold">Weight 2 (Input is fixed at 0.8)</label>
+                            <input id="weight2" type="range" min="-2" max="2" value="-0.5" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="text-center font-mono text-blue-700">w2 = <span id="weight2-val">-0.5</span></div>
+                        </div>
+                        <!-- Bias -->
+                        <div>
+                            <label for="bias" class="font-semibold"><span class="tooltip-hotspot" data-term="bias">Bias</span></label>
+                            <input id="bias" type="range" min="-1" max="1" value="0" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="text-center font-mono text-blue-700">b = <span id="bias-val">0.0</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Perceptron Visualization -->
+                    <div class="md:col-span-2 flex flex-col items-center justify-center space-y-4">
+                        <div class="flex items-center space-x-4">
+                             <!-- Inputs -->
+                            <div class="flex flex-col space-y-8">
+                                <div class="bg-green-100 text-green-800 p-3 rounded-lg shadow text-center">Input 1<br><span class="font-bold text-lg">0.5</span></div>
+                                <div class="bg-green-100 text-green-800 p-3 rounded-lg shadow text-center">Input 2<br><span class="font-bold text-lg">0.8</span></div>
+                            </div>
+                            <!-- Arrows -->
+                            <div class="text-4xl text-gray-400 font-thin">→</div>
+                            <!-- Neuron -->
+                            <div class="bg-blue-100 p-6 rounded-full shadow-lg flex flex-col items-center">
+                                <span class="text-sm font-semibold text-blue-800">Σ (Sum)</span>
+                                <div id="weighted-sum" class="text-2xl font-bold text-blue-900 font-mono">0.10</div>
+                                <div class="text-xs text-gray-500">(w1*x1 + w2*x2 + b)</div>
+                            </div>
+                            <!-- Arrow -->
+                            <div class="text-4xl text-gray-400 font-thin">→</div>
+                            <!-- Activation -->
+                            <div class="bg-purple-100 p-6 rounded-lg shadow-lg flex flex-col items-center">
+                                <span class="text-sm font-semibold text-purple-800">Activation</span>
+                                <div id="activation-output" class="text-2xl font-bold text-purple-900 font-mono">0.52</div>
+                                <div class="text-xs text-gray-500">Sigmoid(Σ)</div>
+                            </div>
+                             <!-- Arrow -->
+                            <div class="text-4xl text-gray-400 font-thin">→</div>
+                             <!-- Output -->
+                            <div class="bg-red-100 text-red-800 p-6 rounded-lg shadow-lg flex flex-col items-center">
+                                <span class="text-sm font-semibold">Output</span>
+                                <div id="final-output" class="text-2xl font-bold text-red-900 font-mono">0.52</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transition Separator -->
+        <div class="text-center my-20">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+            <h3 class="mt-2 text-xl font-semibold text-gray-900">From a Single Neuron to a Network that Understands Context</h3>
+            <p class="mt-1 text-md text-gray-500">The simple perceptron is powerful, but limited. Transformers introduce a revolutionary concept: <span class="font-bold">Self-Attention</span>.</p>
+        </div>
+
+        <!-- SECTION 2: TRANSFORMER & ATTENTION -->
+        <section id="transformer" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Stage 2: The Transformer - Self-Attention</h2>
+            <p class="text-lg text-slate-600 mb-8">Instead of just weighting inputs, Transformers weigh the relationships between inputs. The core mechanism, self-attention, allows the model to decide which words in a sentence are most important when processing a specific word. This is done across multiple <span class="tooltip-hotspot" data-term="attention">attention heads</span> for a richer understanding.</p>
+
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4">Interactive Attention Visualization</h3>
+                <p class="mb-6 text-slate-600">Consider the input sentence: "The cat sat on the mat". Select a "Query" word (the word we're focusing on) and a "Key" word (a word we're comparing it to) to see how an attention score is calculated.</p>
+
+                <!-- Attention Controls -->
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <div class="flex-1">
+                        <label for="query-select" class="block text-sm font-medium text-gray-700">Query (Q): The word we're processing</label>
+                        <select id="query-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="0">The</option>
+                            <option value="1" selected>cat</option>
+                            <option value="2">sat</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="key-select" class="block text-sm font-medium text-gray-700">Key (K): The word we're comparing against</label>
+                        <select id="key-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="0">The</option>
+                            <option value="1">cat</option>
+                            <option value="2" selected>sat</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Attention Visualization -->
+                <div id="attention-viz" class="flex flex-col lg:flex-row items-center justify-around gap-4 p-4 bg-slate-50 rounded-lg">
+                    <!-- Step 1: Dot Product -->
+                    <div class="text-center">
+                        <h4 class="font-bold">1. Dot Product</h4>
+                        <div class="flex items-center space-x-2 my-2">
+                            <div id="query-vec" class="p-2 bg-blue-100 rounded">Q('cat')</div>
+                            <span class="font-bold">·</span>
+                            <div id="key-vec" class="p-2 bg-green-100 rounded">K('sat')</div>
+                        </div>
+                        <div class="attention-arrow text-3xl text-gray-400">↓</div>
+                        <div id="dot-product-val" class="p-3 bg-yellow-100 rounded-lg font-mono text-lg font-bold">Score: 1.8</div>
+                    </div>
+                    
+                    <!-- Step 2: Softmax -->
+                    <div class="text-center">
+                        <h4 class="font-bold">2. Softmax</h4>
+                        <p class="text-xs text-slate-500">(Normalize scores)</p>
+                        <div class="attention-arrow text-3xl text-gray-400">↓</div>
+                        <div id="softmax-val" class="p-3 bg-orange-100 rounded-lg font-mono text-lg font-bold">Weight: 0.65</div>
+                    </div>
+                    
+                    <!-- Step 3: Weighted Value -->
+                    <div class="text-center">
+                        <h4 class="font-bold">3. Weighted Value</h4>
+                        <div class="flex items-center space-x-2 my-2">
+                            <div id="softmax-weight-display" class="p-2 bg-orange-100 rounded">0.65</div>
+                            <span class="font-bold">×</span>
+                            <div id="value-vec" class="p-2 bg-purple-100 rounded">V('sat')</div>
+                        </div>
+                        <div class="attention-arrow text-3xl text-gray-400">↓</div>
+                        <div id="weighted-value-val" class="p-3 bg-red-100 rounded-lg font-mono text-lg font-bold">Result</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: MINI QUIZ -->
+        <section id="quiz" class="mb-16">
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-2 text-center">Test Your Knowledge</h2>
+            <p class="text-lg text-slate-600 mb-8 text-center">Click an answer to see if you're right!</p>
+            
+            <div class="max-w-md mx-auto h-64">
+                <div id="quiz-card" class="flip-card w-full h-full">
+                    <div class="flip-card-inner">
+                        <!-- Front of the card (Question) -->
+                        <div class="flip-card-front">
+                            <h3 class="text-xl font-bold mb-4">What is the primary benefit of using multiple attention heads?</h3>
+                            <div class="w-full space-y-3">
+                                <button class="quiz-option w-full p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-correct="false">It reduces the model's training time.</button>
+                                <button class="quiz-option w-full p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-correct="true">It allows the model to focus on different parts of the input simultaneously.</button>
+                                <button class="quiz-option w-full p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-correct="false">It makes the model compatible with older hardware.</button>
+                            </div>
+                        </div>
+                        <!-- Back of the card (Answer) -->
+                        <div class="flip-card-back">
+                            <h3 id="feedback-title" class="text-2xl font-bold mb-4"></h3>
+                            <p id="feedback-text" class="text-lg"></p>
+                            <button id="reset-quiz" class="mt-6 px-4 py-2 bg-white text-blue-800 font-semibold rounded-lg">Try Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for Tooltips -->
+    <div id="modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button id="modal-close" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="modal-body" class="text-slate-600"></p>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- SHARED DATA & DEFINITIONS ---
+        const termDefinitions = {
+            activation: {
+                title: 'Activation Function',
+                body: 'An activation function decides whether a neuron should be "fired" or activated. It introduces non-linearity into the network, allowing it to learn complex patterns. Common examples include Sigmoid, ReLU, and Tanh. In our demo, we use the Sigmoid function: f(x) = 1 / (1 + e⁻ˣ).'
+            },
+            bias: {
+                title: 'Bias',
+                body: 'A bias is an extra parameter that allows you to shift the activation function to the left or right, which can be critical for successful learning. Think of it as the y-intercept in a linear equation (y = mx + b); it gives the model more flexibility.'
+            },
+            attention: {
+                title: 'Attention Head',
+                body: 'An attention head is one instance of the attention mechanism. A Transformer model uses multiple attention heads in parallel. Each head can learn to focus on different relationships between words. For example, one head might learn grammatical relationships, while another learns semantic ones. This is called "Multi-Head Attention".'
+            }
+        };
+
+        // --- PROGRESS BAR LOGIC ---
+        const progressBar = document.getElementById('progress-bar');
+        const perceptronSection = document.getElementById('perceptron');
+        const transformerSection = document.getElementById('transformer');
+
+        const updateProgressBar = () => {
+            const scrollPosition = window.scrollY;
+            const transformerTop = transformerSection.offsetTop - 200; // Offset for better trigger point
+
+            if (scrollPosition >= transformerTop) {
+                progressBar.style.width = '100%';
+            } else {
+                progressBar.style.width = '50%';
+            }
+        };
+        window.addEventListener('scroll', updateProgressBar);
+
+        // --- PERCEPTRON INTERACTIVITY ---
+        const weight1Slider = document.getElementById('weight1');
+        const weight2Slider = document.getElementById('weight2');
+        const biasSlider = document.getElementById('bias');
+
+        const weight1Val = document.getElementById('weight1-val');
+        const weight2Val = document.getElementById('weight2-val');
+        const biasVal = document.getElementById('bias-val');
+
+        const weightedSumEl = document.getElementById('weighted-sum');
+        const activationOutputEl = document.getElementById('activation-output');
+        const finalOutputEl = document.getElementById('final-output');
+
+        const input1 = 0.5;
+        const input2 = 0.8;
+
+        const sigmoid = (x) => (1 / (1 + Math.exp(-x))).toFixed(2);
+
+        function updatePerceptron() {
+            const w1 = parseFloat(weight1Slider.value);
+            const w2 = parseFloat(weight2Slider.value);
+            const b = parseFloat(biasSlider.value);
+
+            // Update display values
+            weight1Val.textContent = w1.toFixed(1);
+            weight2Val.textContent = w2.toFixed(1);
+            biasVal.textContent = b.toFixed(1);
+
+            // Calculate weighted sum
+            const sum = (w1 * input1) + (w2 * input2) + b;
+            weightedSumEl.textContent = sum.toFixed(2);
+
+            // Calculate activation
+            const activation = sigmoid(sum);
+            activationOutputEl.textContent = activation;
+            finalOutputEl.textContent = activation;
+        }
+
+        [weight1Slider, weight2Slider, biasSlider].forEach(slider => {
+            slider.addEventListener('input', updatePerceptron);
+        });
+        // Initial calculation
+        updatePerceptron();
+
+
+        // --- ATTENTION VISUALIZATION ---
+        const querySelect = document.getElementById('query-select');
+        const keySelect = document.getElementById('key-select');
+
+        // Mock vectors for our words: "The", "cat", "sat"
+        const vectors = {
+            Q: [[0.2, 0.9], [1.5, 0.1], [0.8, 1.2]], // Query vectors
+            K: [[0.3, 0.8], [1.4, 0.2], [0.9, 1.1]], // Key vectors
+            V: [[0.1, 0.5], [0.7, 0.3], [0.4, 0.6]]  // Value vectors
+        };
+        const words = ['The', 'cat', 'sat'];
+
+        const dotProduct = (vec1, vec2) => vec1[0] * vec2[0] + vec1[1] * vec2[1];
+        
+        // Simplified softmax for visualization
+        const simplifiedSoftmax = (score) => (Math.exp(score / 8) / (Math.exp(0.2) + Math.exp(0.5) + Math.exp(1.8))).toFixed(2);
+
+        function updateAttention() {
+            const queryIdx = parseInt(querySelect.value);
+            const keyIdx = parseInt(keySelect.value);
+
+            const queryWord = words[queryIdx];
+            const keyWord = words[keyIdx];
+
+            // Update vector labels
+            document.getElementById('query-vec').textContent = `Q('${queryWord}')`;
+            document.getElementById('key-vec').textContent = `K('${keyWord}')`;
+            document.getElementById('value-vec').textContent = `V('${keyWord}')`;
+
+            // 1. Calculate Dot Product
+            const score = dotProduct(vectors.Q[queryIdx], vectors.K[keyIdx]);
+            document.getElementById('dot-product-val').textContent = `Score: ${score.toFixed(2)}`;
+
+            // 2. Calculate Softmax
+            const attentionWeight = simplifiedSoftmax(score);
+            document.getElementById('softmax-val').textContent = `Weight: ${attentionWeight}`;
+            document.getElementById('softmax-weight-display').textContent = attentionWeight;
+
+            // 3. Calculate Weighted Value
+            const valueVector = vectors.V[keyIdx];
+            const weightedValue = [
+                (valueVector[0] * attentionWeight).toFixed(2),
+                (valueVector[1] * attentionWeight).toFixed(2)
+            ];
+            document.getElementById('weighted-value-val').innerHTML = `[${weightedValue[0]}, ${weightedValue[1]}]`;
+        }
+
+        [querySelect, keySelect].forEach(select => {
+            select.addEventListener('change', updateAttention);
+        });
+        // Initial calculation
+        updateAttention();
+
+
+        // --- MODAL (TOOLTIP) LOGIC ---
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalClose = document.getElementById('modal-close');
+
+        document.querySelectorAll('.tooltip-hotspot').forEach(hotspot => {
+            hotspot.addEventListener('click', () => {
+                const term = hotspot.dataset.term;
+                const definition = termDefinitions[term];
+                if (definition) {
+                    modalTitle.textContent = definition.title;
+                    modalBody.textContent = definition.body;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+            });
+        });
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+
+        // --- QUIZ LOGIC ---
+        const quizCard = document.getElementById('quiz-card');
+        const quizOptions = document.querySelectorAll('.quiz-option');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
+        const resetQuizBtn = document.getElementById('reset-quiz');
+
+        quizOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const isCorrect = option.dataset.correct === 'true';
+                if (isCorrect) {
+                    feedbackTitle.textContent = "Correct! 🎉";
+                    feedbackText.textContent = "Exactly! Multi-head attention allows the model to learn different types of relationships in parallel, creating a much richer representation of the text.";
+                    feedbackTitle.parentElement.style.backgroundColor = '#16a34a'; // Green
+                } else {
+                    feedbackTitle.textContent = "Not Quite 🤔";
+                    feedbackText.textContent = "The main advantage isn't speed or compatibility. It's about allowing the model to jointly attend to information from different representation subspaces at different positions.";
+                    feedbackTitle.parentElement.style.backgroundColor = '#dc2626'; // Red
+                }
+                quizCard.classList.add('flipped');
+            });
+        });
+
+        resetQuizBtn.addEventListener('click', () => {
+            quizCard.classList.remove('flipped');
+        });
+    });
+    </script>
+</body>
+</html>
